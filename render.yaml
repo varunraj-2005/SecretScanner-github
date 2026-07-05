@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: secretscanner
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: |
+      pip install -r web/backend/requirements.txt
+      pip install -e .
+    startCommand: uvicorn web.backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health

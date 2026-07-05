@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SecretScanner — Cloud Repo Secret Detection</title>
+  <meta name="description" content="Scan your codebase and git history for leaked API keys, tokens, passwords and credentials using structural detection, Shannon entropy, and AI-powered context scoring." />
+  <link rel="stylesheet" href="/static/styles.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Background -->
+  <div class="bg-grid"></div>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <div class="app-wrapper">
+
+    <!-- ── Navbar ── -->
+    <nav>
+      <a href="/" class="nav-brand">
+        <div class="brand-icon">🔐</div>
+        <span><span class="grad-text">Secret</span>Scanner</span>
+      </a>
+      <div class="nav-links">
+        <a href="#scan" class="nav-link">Scan</a>
+        <a href="https://github.com" class="nav-link">Docs</a>
+        <span class="nav-badge">v1.0</span>
+        <a href="#scan" class="btn-nav">Start Scan →</a>
+      </div>
+    </nav>
+
+    <!-- ── Hero ── -->
+    <section class="hero" id="scan">
+      <div class="hero-eyebrow">🛡️ Three-Signal Detection Engine</div>
+      <h1 class="hero-title">
+        Find Leaked Secrets<br/>
+        <span class="grad-text">Before Attackers Do</span>
+      </h1>
+      <p class="hero-subtitle">
+        Scan your codebase and full git history for API keys, tokens, private keys, and credentials —
+        with structural detection, Shannon entropy scoring, and context-aware false-positive suppression.
+      </p>
+      <div class="hero-pills">
+        <div class="pill"><span class="dot red"></span> AWS Keys</div>
+        <div class="pill"><span class="dot purple"></span> GitHub PATs</div>
+        <div class="pill"><span class="dot green"></span> Stripe Keys</div>
+        <div class="pill"><span class="dot orange"></span> DB Credentials</div>
+        <div class="pill"><span class="dot"></span> PEM Keys</div>
+        <div class="pill"><span class="dot"></span> JWTs</div>
+        <div class="pill"><span class="dot green"></span> Git History</div>
+        <div class="pill"><span class="dot purple"></span> Entropy Detection</div>
+      </div>
+    </section>
+
+    <!-- ── Main ── -->
+    <main class="main-content">
+
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="scan">⚡ Configure Scan</button>
+        <button class="tab-btn" data-tab="progress">📡 Live Progress</button>
+        <button class="tab-btn" data-tab="results">📊 Results Dashboard</button>
+      </div>
+
+      <!-- ╔══════════════════════════════════╗ -->
+      <!-- ║       PANEL: Configure Scan      ║ -->
+      <!-- ╚══════════════════════════════════╝ -->
+      <div id="panel-scan" class="panel active">
+        <div class="grid-2">
+
+          <!-- Left: Target -->
+          <div class="card">
+            <div class="card-title"><span class="icon">🎯</span> Scan Target</div>
+
+            <!-- Mode toggle -->
+            <div class="flex gap-2 mb-4" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px;">
+              <button class="tab-btn active" data-mode="path" style="flex:1;justify-content:center;">📁 Local Path</button>
+              <button class="tab-btn" data-mode="upload" style="flex:1;justify-content:center;">📦 Upload ZIP</button>
+            </div>
+
+            <!-- Path input -->
+            <div id="path-section">
+              <div class="form-group">
+                <label>Local Directory Path or GitHub URL</label>
+                <input type="text" id="scan-path" placeholder="E:/my/repo  or  https://github.com/owner/repo" />
+              </div>
+              <div class="alert alert-info">
+                💡 Enter an <strong>absolute local path</strong> to a folder, or paste any <strong>public GitHub repository URL</strong>.
+                GitHub repos are automatically cloned to a temp directory before scanning.
+              </div>
+              <div class="flex gap-2 mt-3">
+                <button id="btn-sample" class="btn btn-secondary btn-sm">📁 Load Sample Local Path</button>
+                <button id="btn-github-sample" class="btn btn-secondary btn-sm">🐙 Load GitHub Example</button>
+              </div>
+            </div>
+
+            <!-- Upload -->
+            <div id="upload-section" style="display:none">
+              <div class="drop-zone" id="drop-zone">
+                <input type="file" id="file-input" accept=".zip" />
+                <div class="drop-icon">📦</div>
+                <div class="drop-title">Drag & Drop your ZIP here</div>
+                <div class="drop-sub">or click to browse — .zip archives only</div>
+                <div class="drop-filename" id="drop-filename"></div>
+              </div>
+            </div>
+
+            <!-- Big Scan Button -->
+            <div class="mt-4">
+              <button id="scan-btn" class="btn btn-primary w-full" style="height:52px;font-size:1rem;">
+                🚀 Start Scan
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Options -->
+          <div class="card">
+            <div class="card-title"><span class="icon">⚙️</span> Scan Options</div>
+
+            <!-- Git History toggles -->
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">Scan Git History</div>
+                <div class="toggle-desc">Scan all reachable commits for added secrets</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-history" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">History Only</div>
+                <div class="toggle-desc">Skip working tree, scan commits only</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-history-only" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <hr class="divider" />
+
+            <!-- Filters -->
+            <div class="form-group mt-3">
+              <label>Max Commits (git history)</label>
+              <input type="text" id="max-commits" placeholder="Leave blank for all commits" />
+            </div>
+
+            <div class="form-group">
+              <label>Minimum Severity</label>
+              <select id="min-severity">
+                <option value="low">Low — all findings</option>
+                <option value="medium">Medium and above</option>
+                <option value="high">High and above</option>
+                <option value="critical">Critical only</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Minimum Confidence</label>
+              <select id="min-confidence">
+                <option value="possible">Possible — all findings</option>
+                <option value="likely">Likely and above</option>
+                <option value="confirmed">Confirmed only</option>
+              </select>
+            </div>
+
+            <!-- Signal info -->
+            <div style="background:var(--bg-glass-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:0.8rem;color:var(--text-muted);">
+              <strong style="color:var(--text-secondary);display:block;margin-bottom:8px;">Three-signal engine:</strong>
+              <div>🔍 <strong style="color:var(--accent-purple)">Structural</strong> — 15 regex detectors for known secret formats</div>
+              <div class="mt-1">📊 <strong style="color:var(--accent-cyan)">Entropy</strong> — Shannon entropy flags high-randomness strings</div>
+              <div class="mt-1">🧠 <strong style="color:var(--accent-green)">Context</strong> — Suppresses placeholders, comments, test fixtures</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔══════════════════════════════════╗ -->
+      <!-- ║       PANEL: Live Progress       ║ -->
+      <!-- ╚══════════════════════════════════╝ -->
+      <div id="panel-progress" class="panel">
+        <div class="card">
+          <div class="card-title"><span class="icon">📡</span> Live Scan Progress</div>
+          <p class="text-sm text-muted mb-4">Results will appear automatically in the Results Dashboard once the scan completes.</p>
+
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+          </div>
+
+          <div class="terminal">
+            <div class="terminal-bar">
+              <div class="t-dot red"></div>
+              <div class="t-dot yellow"></div>
+              <div class="t-dot green"></div>
+              <span class="t-title">secretscanner — live output</span>
+            </div>
+            <div id="terminal-output"></div>
+            <span class="terminal-line blink">_</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ╔══════════════════════════════════╗ -->
+      <!-- ║       PANEL: Results Dashboard   ║ -->
+      <!-- ╚══════════════════════════════════╝ -->
+      <div id="panel-results" class="panel">
+
+        <!-- Action bar -->
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-6">
+          <h2 style="font-family:var(--font-heading);font-size:1.4rem;font-weight:700;">
+            Scan Results
+          </h2>
+          <div class="flex gap-2 flex-wrap">
+            <button id="btn-save-baseline" class="btn btn-outline btn-sm">💾 Save Baseline</button>
+            <button id="btn-export-json"  class="btn btn-secondary btn-sm">⬇ JSON</button>
+            <button id="btn-export-sarif" class="btn btn-secondary btn-sm">⬇ SARIF</button>
+            <button id="btn-new-scan"     class="btn btn-primary btn-sm">+ New Scan</button>
+          </div>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="stats-grid">
+          <div class="stat-card total">
+            <div class="stat-number" id="stat-total">—</div>
+            <div class="stat-label">Total Findings</div>
+          </div>
+          <div class="stat-card critical">
+            <div class="stat-number" id="stat-critical">—</div>
+            <div class="stat-label">Critical</div>
+          </div>
+          <div class="stat-card high">
+            <div class="stat-number" id="stat-high">—</div>
+            <div class="stat-label">High</div>
+          </div>
+          <div class="stat-card medium">
+            <div class="stat-number" id="stat-medium">—</div>
+            <div class="stat-label">Medium</div>
+          </div>
+          <div class="stat-card low">
+            <div class="stat-number" id="stat-low">—</div>
+            <div class="stat-label">Low</div>
+          </div>
+          <div class="stat-card total" style="--accent:var(--accent-green)">
+            <div class="stat-number" id="stat-confirmed" style="color:var(--accent-green)">—</div>
+            <div class="stat-label">Confirmed</div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+          <div class="card chart-card">
+            <div class="card-title"><span class="icon">🍩</span> Severity Breakdown</div>
+            <canvas id="chart-severity"></canvas>
+          </div>
+          <div class="card chart-card">
+            <div class="card-title"><span class="icon">🍩</span> Confidence Levels</div>
+            <canvas id="chart-confidence"></canvas>
+          </div>
+          <div class="card chart-card" style="grid-column: 1 / -1;">
+            <div class="card-title"><span class="icon">📊</span> Detectors Breakdown</div>
+            <canvas id="chart-detectors"></canvas>
+          </div>
+        </div>
+
+        <div class="card danger-card">
+          <div class="card-title"><span class="icon">⚠️</span> High-Risk Locations</div>
+          <div id="danger-locations" class="danger-locations"></div>
+        </div>
+
+        <!-- Findings table -->
+        <div class="card">
+          <div class="card-title"><span class="icon">🔎</span> Findings</div>
+
+          <!-- Toolbar -->
+          <div class="results-toolbar">
+            <input class="search-input" id="search-box" placeholder="🔍 Search by file, detector, value…" />
+            <select class="search-input" id="filter-severity" style="min-width:140px;">
+              <option value="">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <select class="search-input" id="filter-confidence" style="min-width:150px;">
+              <option value="">All Confidence</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="likely">Likely</option>
+              <option value="possible">Possible</option>
+            </select>
+            <span class="spacer"></span>
+            <span class="text-sm text-muted" id="filter-count"></span>
+          </div>
+
+          <!-- Empty State -->
+          <div id="empty-state" class="empty-state" style="display:none;">
+            <div class="empty-icon">🎉</div>
+            <div class="empty-title">No secrets detected!</div>
+            <div class="empty-sub">Your codebase looks clean. Run with broader filters to double-check.</div>
+          </div>
+
+          <!-- Table -->
+          <div id="findings-table-wrap" class="findings-wrap">
+            <table class="findings-table">
+              <thead>
+                <tr>
+                  <th>Severity</th>
+                  <th>Confidence</th>
+                  <th>Detector</th>
+                  <th>File : Line</th>
+                  <th>Redacted Value</th>
+                  <th>Commit</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="findings-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /panel-results -->
+
+    </main><!-- /main-content -->
+  </div><!-- /app-wrapper -->
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- App JS -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
