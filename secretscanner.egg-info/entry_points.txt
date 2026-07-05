@@ -1,2 +1,0 @@
-[console_scripts]
-secretscanner = secretscanner.cli:main

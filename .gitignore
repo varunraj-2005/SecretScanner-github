@@ -2,6 +2,10 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.egg-info/
+.pytest_cache/
+build/
+dist/
 .venv/
 .env
 *.log

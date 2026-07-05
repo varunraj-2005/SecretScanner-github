@@ -1,4 +1,0 @@
-colorama>=0.4.4
-
-[dev]
-pytest>=7.0.0
